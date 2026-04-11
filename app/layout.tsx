@@ -5,11 +5,12 @@ import "./globals.css";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Codex Demo",
-  description: "A Codex Demo App",
+  title: "TinyNotes",
+  description: "TinyNotes application scaffold with placeholder routes and layouts.",
 };
 
 export default function RootLayout({
@@ -19,7 +20,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>{children}</body>
+      <body
+        className={`${inter.variable} bg-[color:var(--color-background)] text-[color:var(--color-foreground)] antialiased`}
+      >
+        {children}
+      </body>
     </html>
   );
 }
