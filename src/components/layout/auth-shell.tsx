@@ -9,7 +9,7 @@ type AuthShellProps = {
 
 export function AuthShell({ children }: AuthShellProps) {
   return (
-    <PageShell align="center" width="narrow">
+    <PageShell align="center" width="default">
       <SurfaceCard>
         <div className="grid gap-6">{children}</div>
       </SurfaceCard>
