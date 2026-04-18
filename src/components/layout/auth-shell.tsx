@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { PageShell } from "@/src/components/ui/page-shell";
-import { SurfaceCard } from "@/src/components/ui/surface-card";
 
 type AuthShellProps = {
   children: ReactNode;
@@ -9,10 +8,8 @@ type AuthShellProps = {
 
 export function AuthShell({ children }: AuthShellProps) {
   return (
-    <PageShell align="center" width="default">
-      <SurfaceCard>
-        <div className="grid gap-6">{children}</div>
-      </SurfaceCard>
+    <PageShell align="center" justify="center" width="wide">
+      {children}
     </PageShell>
   );
 }

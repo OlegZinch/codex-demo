@@ -6,8 +6,10 @@ type SurfaceCardProps = {
 };
 
 const toneClasses = {
-  default: "bg-[color:var(--color-surface)] shadow-[0_24px_60px_rgba(13,59,57,0.12)]",
-  subtle: "bg-[color:var(--color-surface-muted)] shadow-[0_18px_40px_rgba(13,59,57,0.08)]",
+  default:
+    "bg-[color:var(--color-surface)] shadow-[0_24px_70px_rgba(1,9,18,0.46)] backdrop-blur-xl",
+  subtle:
+    "bg-[color:var(--color-surface-muted)] shadow-[0_18px_44px_rgba(1,9,18,0.34)] backdrop-blur-xl",
 };
 
 export function SurfaceCard({ children, tone = "default" }: SurfaceCardProps) {
