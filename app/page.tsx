@@ -14,8 +14,8 @@ export default function HomePage() {
       <SurfaceCard>
         <div className="grid gap-5">
           <p className="text-base leading-7 text-[color:var(--color-foreground-muted)]">
-            This page exists to anchor the route tree while the rest of the application is scaffolded.
-            No authentication, redirects, or feature logic have been wired yet.
+            This page exists to anchor the route tree while the rest of the application is
+            scaffolded. No authentication, redirects, or feature logic have been wired yet.
           </p>
           <PlaceholderList
             items={[
