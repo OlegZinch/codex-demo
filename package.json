@@ -6,6 +6,9 @@
     "dev": "bun run --bun next dev",
     "build": "bun run --bun next build",
     "start": "bun run --bun next start",
+    "db:migrate": "bun scripts/migrate.ts",
+    "db:migrate:up": "bun scripts/migrate.ts up",
+    "db:migrate:down": "bun scripts/migrate.ts down",
     "lint": "oxlint",
     "format": "oxfmt"
   },
@@ -16,6 +19,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/bun": "^1.3.13",
     "@types/node": "^25.2.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
