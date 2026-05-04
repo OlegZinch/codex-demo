@@ -1,6 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useActionState } from "react";
 
 import { RouteHeader } from "@/src/components/ui/route-header";
+import {
+  type AuthFieldName,
+  type AuthFormState,
+  loginAction,
+  registerAction,
+} from "@/src/lib/auth-actions";
 
 type AuthMode = "login" | "register";
 
@@ -11,21 +20,24 @@ type AuthModeContent = {
   formTitle: string;
   formDescription: string;
   submitLabel: string;
+  pendingLabel: string;
   switchHref: string;
   switchLabel: string;
+  namePlaceholder?: string;
   emailPlaceholder: string;
   passwordPlaceholder: string;
 };
 
-const authModeContent = {
+const authModeContent: Record<AuthMode, AuthModeContent> = {
   login: {
     eyebrow: "Welcome back",
     title: "Sign in to keep writing without friction.",
     description:
       "Access TinyNotes with a focused email and password flow that keeps the entry point simple.",
     formTitle: "Login",
-    formDescription: "Use the demo form below. Authentication wiring lands in the next pass.",
+    formDescription: "Use your email and password to continue to your notes.",
     submitLabel: "Sign in",
+    pendingLabel: "Signing in...",
     switchHref: "/register",
     switchLabel: "Create account",
     emailPlaceholder: "you@example.com",
@@ -37,14 +49,16 @@ const authModeContent = {
     description:
       "Register with the same straightforward credentials flow. No extra providers, no reset detours.",
     formTitle: "Register",
-    formDescription: "This is the UI scaffold for account creation. Auth logic still needs wiring.",
+    formDescription: "Create a TinyNotes account with a name, email, and password.",
     submitLabel: "Create account",
+    pendingLabel: "Creating account...",
     switchHref: "/login",
     switchLabel: "Back to login",
+    namePlaceholder: "Your name",
     emailPlaceholder: "you@example.com",
     passwordPlaceholder: "Choose a password",
   },
-} satisfies Record<AuthMode, AuthModeContent>;
+};
 
 const authHighlights = [
   {
@@ -56,13 +70,28 @@ const authHighlights = [
     description: "There is no password reset or third-party provider branch in this flow.",
   },
   {
-    title: "Ready to wire",
-    description: "The layout is prepared for validation, server actions, and sessions next.",
+    title: "Session-backed",
+    description: "Secure cookies keep signed-in users connected to their private notes.",
   },
 ] as const;
 
 const inputClassName =
   "w-full rounded-2xl border border-[color:var(--color-border)] bg-[rgba(4,18,31,0.82)] px-4 py-3 text-sm text-[color:var(--color-foreground)] outline-none transition placeholder:text-[rgba(191,211,223,0.78)] focus:border-[color:var(--color-accent-strong)] focus:bg-[rgba(7,24,41,0.98)] focus:ring-4 focus:ring-[rgba(122,211,196,0.16)]";
+
+const initialAuthFormState: AuthFormState = {
+  message: null,
+  fieldErrors: {},
+  values: {},
+};
+
+type FieldConfig = {
+  id: string;
+  label: string;
+  name: AuthFieldName;
+  type: "email" | "password" | "text";
+  autoComplete: string;
+  placeholder: string;
+};
 
 type AuthCredentialsFormProps = {
   mode: AuthMode;
@@ -70,7 +99,21 @@ type AuthCredentialsFormProps = {
 
 export function AuthCredentialsForm({ mode }: AuthCredentialsFormProps) {
   const content = authModeContent[mode];
-  const fields = [
+  const action = mode === "login" ? loginAction : registerAction;
+  const [state, formAction, isPending] = useActionState(action, initialAuthFormState);
+  const fields: FieldConfig[] = [
+    ...(mode === "register"
+      ? [
+          {
+            id: `${mode}-name`,
+            label: "Name",
+            name: "name" as const,
+            type: "text" as const,
+            autoComplete: "name",
+            placeholder: content.namePlaceholder ?? "Your name",
+          },
+        ]
+      : []),
     {
       id: `${mode}-email`,
       label: "Email",
@@ -87,7 +130,7 @@ export function AuthCredentialsForm({ mode }: AuthCredentialsFormProps) {
       autoComplete: mode === "login" ? "current-password" : "new-password",
       placeholder: content.passwordPlaceholder,
     },
-  ] as const;
+  ];
 
   return (
     <section className="relative isolate w-full overflow-hidden rounded-[32px] border border-[color:var(--color-border-strong)] bg-[linear-gradient(145deg,rgba(9,29,45,0.98),rgba(3,14,24,1))] shadow-[0_40px_120px_rgba(1,9,18,0.58)]">
@@ -135,7 +178,7 @@ export function AuthCredentialsForm({ mode }: AuthCredentialsFormProps) {
             </Link>
           </div>
 
-          <form className="grid gap-5 pt-6">
+          <form action={formAction} className="grid gap-5 pt-6">
             {fields.map((field) => (
               <div key={field.id} className="grid gap-2">
                 <label
@@ -145,28 +188,51 @@ export function AuthCredentialsForm({ mode }: AuthCredentialsFormProps) {
                   {field.label}
                 </label>
                 <input
+                  aria-describedby={
+                    state.fieldErrors[field.name] === undefined ? undefined : `${field.id}-error`
+                  }
+                  aria-invalid={state.fieldErrors[field.name] === undefined ? undefined : true}
                   autoComplete={field.autoComplete}
                   className={inputClassName}
+                  defaultValue={
+                    field.name === "password" ? undefined : (state.values[field.name] ?? "")
+                  }
+                  disabled={isPending}
                   id={field.id}
                   name={field.name}
                   placeholder={field.placeholder}
                   required
                   type={field.type}
                 />
+                {state.fieldErrors[field.name] === undefined ? null : (
+                  <p
+                    className="text-sm leading-6 text-[#ffb4a8]"
+                    id={`${field.id}-error`}
+                    role="alert"
+                  >
+                    {state.fieldErrors[field.name]}
+                  </p>
+                )}
               </div>
             ))}
 
-            <button
-              className="mt-2 inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent-strong)] px-5 py-3 text-sm font-semibold text-[#04111c] shadow-[0_18px_34px_rgba(47,207,197,0.2)] transition hover:bg-[color:var(--color-accent)]"
-              type="button"
-            >
-              {content.submitLabel}
-            </button>
+            {state.message === null ? null : (
+              <p
+                aria-live="polite"
+                className="rounded-2xl border border-[rgba(255,180,168,0.34)] bg-[rgba(81,23,20,0.32)] px-4 py-3 text-sm leading-6 text-[#ffd6ce]"
+                role="alert"
+              >
+                {state.message}
+              </p>
+            )}
 
-            <p className="text-xs leading-6 text-[color:var(--color-foreground-muted)]">
-              UI scaffold only for now. Validation, session handling, and persistence will be wired
-              in the next pass.
-            </p>
+            <button
+              className="mt-2 inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent-strong)] px-5 py-3 text-sm font-semibold text-[#04111c] shadow-[0_18px_34px_rgba(47,207,197,0.2)] transition hover:bg-[color:var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={isPending}
+              type="submit"
+            >
+              {isPending ? content.pendingLabel : content.submitLabel}
+            </button>
           </form>
         </div>
       </div>
