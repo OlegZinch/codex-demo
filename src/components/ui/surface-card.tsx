@@ -6,16 +6,14 @@ type SurfaceCardProps = {
 };
 
 const toneClasses = {
-  default:
-    "bg-[color:var(--color-surface)] shadow-[0_24px_70px_rgba(1,9,18,0.46)] backdrop-blur-xl",
-  subtle:
-    "bg-[color:var(--color-surface-muted)] shadow-[0_18px_44px_rgba(1,9,18,0.34)] backdrop-blur-xl",
+  default: "bg-surface shadow-[0_24px_70px_rgba(1,9,18,0.46)] backdrop-blur-xl",
+  subtle: "bg-surface-muted shadow-[0_18px_44px_rgba(1,9,18,0.34)] backdrop-blur-xl",
 };
 
 export function SurfaceCard({ children, tone = "default" }: SurfaceCardProps) {
   return (
     <section
-      className={`w-full rounded-[28px] border border-[color:var(--color-border)] p-6 sm:p-8 ${toneClasses[tone]}`}
+      className={`w-full rounded-[28px] border border-border p-6 sm:p-8 ${toneClasses[tone]}`}
     >
       {children}
     </section>

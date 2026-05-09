@@ -12,7 +12,7 @@ export default function NotFound() {
             eyebrow="Error 404"
             title="Page Not Found"
           />
-          <p className="text-base leading-7 text-[color:var(--color-foreground-muted)]">
+          <p className="text-base leading-7 text-foreground-muted">
             The requested page or resource does not exist in this scaffold.
           </p>
         </div>
