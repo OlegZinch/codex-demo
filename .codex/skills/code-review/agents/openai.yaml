@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Review"
+  short_description: "Thorough read-only code review reports"
+  default_prompt: "Use $code-review to perform a thorough read-only review of this codebase."
