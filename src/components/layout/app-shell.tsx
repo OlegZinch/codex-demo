@@ -9,7 +9,7 @@ type AppShellProps = {
 export function AppShell({ children }: AppShellProps) {
   return (
     <PageShell width="wide">
-      <div className="grid gap-6">{children}</div>
+      <div className="grid w-full gap-6">{children}</div>
     </PageShell>
   );
 }

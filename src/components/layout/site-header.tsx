@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ContentContainer } from "@/src/components/ui/content-container";
 import { logoutAction } from "@/src/lib/auth-actions";
 import { getCurrentSession } from "@/src/lib/session";
 
@@ -18,7 +19,7 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-[rgba(3,16,28,0.82)] backdrop-blur-xl">
-      <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between gap-4 px-6 sm:px-8 lg:px-10">
+      <ContentContainer className="flex h-20 items-center justify-between gap-4" width="wide">
         <Link
           className="text-lg font-semibold text-accent transition hover:text-foreground"
           href="/"
@@ -48,7 +49,7 @@ export async function SiteHeader() {
             </>
           )}
         </nav>
-      </div>
+      </ContentContainer>
     </header>
   );
 }
