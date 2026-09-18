@@ -27,6 +27,10 @@ export function createEmptyTiptapDocument(): JSONContent {
   };
 }
 
+export function createSerializableTiptapContent(content: JSONContent): JSONContent {
+  return JSON.parse(JSON.stringify(content)) as JSONContent;
+}
+
 export function isSafeHttpUrl(value: string): boolean {
   try {
     const url = new URL(value);

@@ -5,6 +5,7 @@ import {
   renderTiptapContentToSafeHtml,
   validateAndSerializeTiptapContent,
 } from "@/src/lib/tiptap-content";
+import { createSerializableTiptapContent } from "@/src/lib/tiptap-config";
 
 describe("TipTap note content", () => {
   test("accepts an empty document", () => {
@@ -14,6 +15,82 @@ describe("TipTap note content", () => {
     };
 
     expect(validateAndSerializeTiptapContent(document)).toBe(JSON.stringify(document));
+  });
+
+  test("normalizes TipTap attribute maps to Server Action-compatible plain objects", () => {
+    const headingAttributes = Object.assign(Object.create(null) as Record<string, unknown>, {
+      level: 1,
+    });
+    const document = {
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: headingAttributes,
+          content: [{ type: "text", text: "Heading" }],
+        },
+      ],
+    };
+
+    const normalized = createSerializableTiptapContent(document);
+    const normalizedAttributes = normalized.content?.[0]?.attrs;
+
+    expect(normalized).toEqual(document);
+    expect(Object.getPrototypeOf(normalizedAttributes)).toBe(Object.prototype);
+    expect(validateAndSerializeTiptapContent(normalized)).toBe(JSON.stringify(document));
+  });
+
+  test("accepts supported content with attributes after normalization", () => {
+    const document = {
+      type: "doc",
+      content: [
+        ...([1, 2, 3] as const).map((level) => ({
+          type: "heading",
+          attrs: { level },
+          content: [{ type: "text", text: `Heading ${level}` }],
+        })),
+        {
+          type: "orderedList",
+          attrs: { start: 1, type: null },
+          content: [
+            {
+              type: "listItem",
+              content: [{ type: "paragraph", content: [{ type: "text", text: "Item" }] }],
+            },
+          ],
+        },
+        {
+          type: "codeBlock",
+          attrs: { language: null },
+          content: [{ type: "text", text: "const safe = true;" }],
+        },
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Safe link",
+              marks: [
+                {
+                  type: "link",
+                  attrs: {
+                    href: "https://example.com",
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    class: null,
+                    title: null,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const normalized = createSerializableTiptapContent(document);
+
+    expect(validateAndSerializeTiptapContent(normalized)).toBe(JSON.stringify(document));
   });
 
   test("rejects invalid roots and unsupported nodes", () => {

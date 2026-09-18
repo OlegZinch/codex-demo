@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { EditorToolbar } from "@/src/components/notes/editor-toolbar";
 import { autosaveNoteAction, createNoteAction } from "@/src/lib/note-actions";
-import { tiptapExtensions } from "@/src/lib/tiptap-config";
+import { createSerializableTiptapContent, tiptapExtensions } from "@/src/lib/tiptap-config";
 
 type SaveStatus = "dirty" | "error" | "saved" | "saving";
 
@@ -294,7 +294,10 @@ function createSnapshot(title: string, contentJson: JSONContent): NoteSnapshot {
 
 async function createNoteSafely(title: string, contentJson: JSONContent) {
   try {
-    return await createNoteAction({ title, contentJson });
+    return await createNoteAction({
+      title,
+      contentJson: createSerializableTiptapContent(contentJson),
+    });
   } catch {
     return {
       ok: false as const,
@@ -311,7 +314,7 @@ async function autosaveNoteSafely(id: string, snapshot: NoteSnapshot) {
     return await autosaveNoteAction({
       id,
       title: snapshot.title,
-      contentJson: snapshot.contentJson,
+      contentJson: createSerializableTiptapContent(snapshot.contentJson),
     });
   } catch {
     return {
