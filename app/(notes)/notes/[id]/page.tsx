@@ -13,8 +13,6 @@ type NotePageProps = {
     id: string;
   }>;
   searchParams: Promise<{
-    error?: string;
-    saved?: string;
     shareUrl?: string;
   }>;
 };
@@ -22,7 +20,7 @@ type NotePageProps = {
 export default async function NotePage({ params, searchParams }: NotePageProps) {
   const session = await requireSession();
   const { id } = await params;
-  const { error, saved, shareUrl } = await searchParams;
+  const { shareUrl } = await searchParams;
   const note = getNoteForUser(id, session.user.id);
 
   if (note === null) {
@@ -47,21 +45,11 @@ export default async function NotePage({ params, searchParams }: NotePageProps) 
             </Link>
           </div>
 
-          {saved === undefined ? null : (
-            <p className="rounded-2xl border border-border-strong bg-[rgba(47,207,197,0.12)] px-4 py-3 text-sm leading-6 text-accent">
-              Note saved.
-            </p>
-          )}
-          {error === undefined ? null : (
-            <p className="rounded-2xl border border-[rgba(255,180,168,0.34)] bg-[rgba(81,23,20,0.32)] px-4 py-3 text-sm leading-6 text-[#ffd6ce]">
-              Unable to save that note. Check the content length and try again.
-            </p>
-          )}
-
           <NoteEditorForm
             id={note.id}
-            initialContent={note.contentText}
+            initialContent={note.contentJson}
             initialTitle={note.title}
+            mode="edit"
           />
         </div>
       </SurfaceCard>

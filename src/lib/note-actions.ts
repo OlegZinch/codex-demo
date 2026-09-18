@@ -1,5 +1,6 @@
 "use server";
 
+import type { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -12,10 +13,27 @@ import {
   updateNote,
 } from "@/src/lib/notes";
 import { requireSession } from "@/src/lib/session";
+import { InvalidNoteContentError } from "@/src/lib/tiptap-content";
 
-export type NoteFormState = {
-  message: string | null;
+type NoteMutationInput = {
+  title: string;
+  contentJson: JSONContent;
 };
+
+type NoteActionError = {
+  code: "INTERNAL_ERROR" | "NOT_FOUND" | "VALIDATION_ERROR";
+  message: string;
+};
+
+export type CreateNoteResult =
+  | {
+      ok: true;
+      noteId: string;
+    }
+  | {
+      ok: false;
+      error: NoteActionError;
+    };
 
 export type AutosaveNoteResult =
   | {
@@ -24,86 +42,75 @@ export type AutosaveNoteResult =
     }
   | {
       ok: false;
-      message: string;
+      error: NoteActionError;
     };
 
-export async function autosaveNoteAction(input: {
-  id: string;
-  title: string;
-  content: string;
-}): Promise<AutosaveNoteResult> {
+export async function autosaveNoteAction(
+  input: NoteMutationInput & { id: string },
+): Promise<AutosaveNoteResult> {
   const session = await requireSession();
 
   try {
-    const updated = updateNote(input.id, session.user.id, input.title, input.content);
+    const updatedAt = updateNote(input.id, session.user.id, input.title, input.contentJson);
 
-    if (!updated) {
+    if (updatedAt === null) {
       return {
         ok: false,
-        message: "Unable to save this note.",
+        error: {
+          code: "NOT_FOUND",
+          message: "Unable to save this note.",
+        },
       };
     }
 
     revalidatePath("/notes");
-    revalidatePath(`/notes/${input.id}`);
 
     return {
       ok: true,
-      updatedAt: new Date().toISOString(),
+      updatedAt,
     };
   } catch (error) {
     console.error("Autosave note failed", error);
+    const validationError = error instanceof InvalidNoteContentError;
 
     return {
       ok: false,
-      message: "Unable to save this note.",
+      error: {
+        code: validationError ? "VALIDATION_ERROR" : "INTERNAL_ERROR",
+        message: validationError
+          ? "Unable to save this note. Check the content and try again."
+          : "Unable to save this note right now.",
+      },
     };
   }
 }
 
-export async function createNoteAction(formData: FormData): Promise<void> {
+export async function createNoteAction(input: NoteMutationInput): Promise<CreateNoteResult> {
   const session = await requireSession();
-  let noteId: string;
 
   try {
-    noteId = createNote(
-      session.user.id,
-      getFormString(formData, "title"),
-      getFormString(formData, "content"),
-    );
+    const noteId = createNote(session.user.id, input.title, input.contentJson);
+
+    revalidatePath("/notes");
+
+    return {
+      ok: true,
+      noteId,
+    };
   } catch (error) {
     console.error("Create note failed", error);
-    redirect("/notes/new?error=validation");
+    const validationError = error instanceof InvalidNoteContentError;
+
+    return {
+      ok: false,
+      error: {
+        code: validationError ? "VALIDATION_ERROR" : "INTERNAL_ERROR",
+        message: validationError
+          ? "Unable to create this note. Check the content and try again."
+          : "Unable to create this note right now.",
+      },
+    };
   }
-
-  revalidatePath("/notes");
-  redirect(`/notes/${noteId}`);
-}
-
-export async function updateNoteAction(formData: FormData): Promise<void> {
-  const session = await requireSession();
-  const id = getFormString(formData, "id");
-  let updated = false;
-
-  try {
-    updated = updateNote(
-      id,
-      session.user.id,
-      getFormString(formData, "title"),
-      getFormString(formData, "content"),
-    );
-  } catch (error) {
-    console.error("Update note failed", error);
-    redirect(`/notes/${id}?error=validation`);
-  }
-
-  if (!updated) {
-    redirect("/notes");
-  }
-
-  revalidatePath("/notes");
-  revalidatePath(`/notes/${id}`);
-  redirect(`/notes/${id}?saved=1`);
 }
 
 export async function deleteNoteAction(formData: FormData): Promise<void> {
